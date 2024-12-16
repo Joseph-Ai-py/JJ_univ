@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI NLP Translation Model</title>
+    <style>
+        /* 초기화 및 기본 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 600px;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            margin-bottom: 2rem;
+            color: #343a40;
+        }
+        h1 span {
+            color: #0d6efd;
+        }
+        label {
+            font-size: 1.2rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            color: #495057;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            padding: 1rem; /* 패딩 증가 */
+            font-size: 1.2rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            color: #212529;
+            border: 2px solid #ced4da; /* 테두리 두께 증가 */
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+            background-color: #f8f9fa;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        textarea:focus {
+            border-color: #0d6efd;
+            background-color: #ffffff;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 1rem; /* 패딩 증가 */
+            font-size: 1.3rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            color: #ffffff;
+            background-color: #0d6efd;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+        button:active {
+            background-color: #084298;
+            transform: translateY(0);
+        }
+        #result {
+            margin-top: 2rem; /* 간격 증가 */
+            text-align: left;
+            padding: 1.5rem; /* 패딩 증가 */
+            border: 2px solid #ced4da; /* 테두리 두께 증가 */
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            font-size: 1.2rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+        }
+        #result h3 {
+            font-size: 1.5rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            margin-bottom: 1rem;
+            color: #343a40;
+        }
+        #result p {
+            font-size: 1.2rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+            color: #495057;
+            margin-bottom: 0.8rem;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .grammar-details {
+            margin-top: 1.5rem; /* 간격 증가 */
+            padding: 1.5rem; /* 패딩 증가 */
+            background-color: #e9ecef;
+            border-radius: 5px;
+            font-size: 1.2rem; /* 글자 크기 키움 */
+            font-weight: bold; /* 글씨 두껍게 설정 */
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem; /* 모바일에서 글자 크기 적당히 조정 */
+            }
+            label {
+                font-size: 1rem; /* 모바일에서 글자 크기 조정 */
+            }
+            textarea {
+                font-size: 1rem;
+            }
+            button {
+                font-size: 1.1rem;
+            }
+            #result {
+                font-size: 1rem;
+            }
+            #result h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI <span>NLP</span> Translation Analysis</h1>
+        <label for="englishSentence">생성된 영어 문장:</label>
+        <textarea id="englishSentence" readonly>{{ english_sentence }}</textarea>
+
+        <label for="koreanTranslation">한국어 번역 입력:</label>
+        <textarea id="koreanTranslation" placeholder="한국어 번역을 입력하세요"></textarea>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <button onclick="analyzeTranslation()" style="flex: 7; padding: 1rem;">번역 분석</button>
+            <button onclick="resetSession()" style="flex: 3; padding: 1rem; background: none; border: 2px solid #0d6efd; color: #0d6efd; border-radius: 5px; cursor: pointer;">
+                <img src="https://img.icons8.com/ios-glyphs/20/0d6efd/restart--v1.png" alt="리셋 아이콘" style="vertical-align: middle; margin-right: 5px;">
+                초기화
+            </button>
+        </div>
+
+        <!-- 분석 상태 메시지 표시 영역 -->
+        <div id="result" style="margin-top: 2rem; padding: 1rem; border: 1px solid #ced4da; border-radius: 5px; background-color: #e9ecef; display: none; text-align: left;">
+            <p id="resultMessage">분석을 진행 중입니다...</p>
+        </div>
+
+        <!-- 분석 결과 표시를 위한 새로운 영역 -->
+        <div id="analysisResult" style="margin-top: 2rem; padding: 1.5rem; border: 2px solid #495057; border-radius: 5px; background-color: #f8f9fa; display: none; text-align: left;">
+            <h3 style="margin-bottom: 1rem;">분석 결과</h3>
+            <p><strong>오류 내용:</strong> <span id="errorDetails">없음</span></p>
+            <p><strong>문법 규칙:</strong> <span id="grammarRules">없음</span></p>
+            <p><strong>스타일 개선 제안:</strong> <span id="styleSuggestions">없음</span></p>
+            <p><strong>수정된 한국어 번역:</strong> <span id="revisedTranslation">없음</span></p>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeTranslation() {
+            const koreanTranslation = document.getElementById('koreanTranslation').value;
+            const resultDiv = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            const analysisDiv = document.getElementById('analysisResult');
+            const errorDetails = document.getElementById('errorDetails');
+            const grammarRules = document.getElementById('grammarRules');
+            const styleSuggestions = document.getElementById('styleSuggestions');
+            const revisedTranslation = document.getElementById('revisedTranslation');
+            const englishSentence = document.getElementById('englishSentence').value;
+
+            if (!koreanTranslation) {
+                alert('한국어 번역을 입력해주세요.');
+                return;
+            }
+
+            const payload = { korean_translation: koreanTranslation };
+
+            try {
+                // 분석 중 메시지 표시
+                resultDiv.style.display = 'block';
+                resultMessage.textContent = '분석을 진행 중입니다...';
+
+                const response = await fetch('/analyze_translation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) throw new Error('API 요청이 실패했습니다.');
+
+                const data = await response.json();
+                if (data.error) {
+                    resultMessage.textContent = `오류: ${data.error}`;
+                } else {
+                    const { analysis } = data;
+
+                    // 분석 결과를 새로운 영역에 표시
+                    errorDetails.textContent = analysis['오류 내용 출력'] || '없음';
+                    grammarRules.innerHTML = analysis['영어 문장에서 사용된 문법 규칙'] || '없음';
+                    styleSuggestions.textContent = analysis['의미와 스타일 개선을 위한 제안'] || '없음';
+                    revisedTranslation.textContent = analysis['수정된 한국어 번역'] || '없음';
+
+                    // 결과 메시지 숨기고 분석 결과 표시
+                    resultDiv.style.display = 'none';
+                    analysisDiv.style.display = 'block';
+                }
+            } catch (error) {
+                resultMessage.textContent = `오류: ${error.message}`;
+            }
+        }
+
+        async function resetSession() {
+            try {
+                const response = await fetch('/analyze_translation', {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) throw new Error('세션 초기화에 실패했습니다.');
+
+                const data = await response.json();
+                alert(data.message || '세션이 초기화되었습니다.');
+                location.reload();
+            } catch (error) {
+                alert(`오류: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
